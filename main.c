@@ -7,10 +7,10 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <SDL2/SDL.h>
 
 typedef struct{
     SDL_Rect *body;
@@ -43,6 +43,7 @@ void cleanup();
 void handle_key_press(SDL_Keysym *keysym, SDL_EventType type);
 void handle_player_movements(Player *player);
 void handle_ball_movement(Ball *ball);
+void bounce(Ball *b);
 void render_player(Player *player);
 void render_ball(Ball *ball);
 
@@ -168,23 +169,41 @@ void handle_player_movements(Player *player){
 }
 
 // Handle all the ball movements
-void handle_ball_movement(Ball *ball){
-    int *x = &ball->body->x;
-    int *y = &ball->body->y;
-    int *speed = &ball->speed;
-    float *angle = &ball->angle;
-    int *direction = &ball->direction;
-    int size = ball->body->w;
+void handle_ball_movement(Ball *b){
+    int *x = &b->body->x;
+    int *y = &b->body->y;
+    int *speed = &b->speed;
+    float *angle = &b->angle;
+    int *direction = &b->direction;
+    int size = b->body->w;
 
+    // Check collision with walls
     if ((*x) >  WIDTH - size)
-        (*direction) = -1;
+        bounce(b);
     
     if ((*x) < 0)
-        (*direction) = +1;
+        bounce(b);
+
+    // Check collision with players
+    if ((*x) < player1->body->x + player1->body->w &&
+        (*y) + size > player1->body->y &&
+        (*y) < player1->body->y + player1->body->h)
+        bounce(b);
+
+    if ((*x) + size > player2->body->x&&
+        (*y) + size > player2->body->y &&
+        (*y) < player2->body->y + player2->body->h)
+        bounce(b);
 
 
+    // Move the ball in a line
     (*x) += (*direction) * (*speed);
     //(*y) += (int) (*angle) * (*x);
+}
+
+// Make the ball bounce, inverting the direction of the movement
+void bounce(Ball *b){
+    b->direction *= -1;
 }
 
 // Render the player to the screen
